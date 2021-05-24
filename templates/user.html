@@ -1,0 +1,12 @@
+{% extends 'base.html' %}
+<!--  -->
+{% block title %}Home Page{% endblock %}
+<!--  -->
+{% block content %}
+<ul>
+  <li>Username: {{user.username}}</li>
+  <li>Email Address: {{user.email}}</li>
+  <li>First Name: {{user.first_name}}</li>
+  <li>Last Name: {{user.last_name}}</li>
+</ul>
+{% endblock %}

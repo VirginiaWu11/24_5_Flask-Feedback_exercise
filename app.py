@@ -36,13 +36,17 @@ def register():
         db.session.commit()
         session['username']=username
         flash('Welcome! Successfully Created Your Account!', "success")
-        return redirect('/secret')
+        return redirect(f'/users/{username}')
     
     return render_template('register-form.html',form=form)
 
-@app.route('/secret')
-def secret():
-    return "You Made it!"
+@app.route('/users/<username>')
+def secret(username):
+    if 'username' not in session:
+        flash('Please login first.','danger')
+        return redirect('/login')
+    user=User.query.filter_by(username=username).first()
+    return render_template('user.html',user=user)
 
 @app.route("/login", methods=['GET','POST'])
 def login():
@@ -55,8 +59,14 @@ def login():
         if user:
             session['username']=username
             flash(f"Welcome Back, {user.username}!", "success")
-            return redirect('/secret')
+            return redirect(f'/users/{username}')
         else:
             form.username.errors=['invalid username/password.']
     
     return render_template('login.html',form=form)
+
+@app.route('/logout')
+def logout():
+    session.pop('username')
+    flash('Goodbye!', 'info')
+    return redirect('/')
