@@ -1,7 +1,7 @@
 from flask import Flask, render_template, redirect, session, flash
 from flask_debugtoolbar import DebugToolbarExtension
 from models import connect_db, db, User
-from forms import UserForm
+from forms import UserForm, LoginForm
 
 app = Flask(__name__)
 app.config["SQLALCHEMY_DATABASE_URI"] = "postgresql:///feedback"
@@ -34,6 +34,7 @@ def register():
         db.session.add(new_user)
         
         db.session.commit()
+        session['username']=username
         flash('Welcome! Successfully Created Your Account!', "success")
         return redirect('/secret')
     
@@ -43,3 +44,19 @@ def register():
 def secret():
     return "You Made it!"
 
+@app.route("/login", methods=['GET','POST'])
+def login():
+    form=LoginForm()
+    if form.validate_on_submit():
+        username=form.username.data
+        password=form.password.data
+
+        user = User.authenticate(username,password)
+        if user:
+            session['username']=username
+            flash(f"Welcome Back, {user.username}!", "success")
+            return redirect('/secret')
+        else:
+            form.username.errors=['invalid username/password.']
+    
+    return render_template('login.html',form=form)
