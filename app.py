@@ -43,7 +43,7 @@ def register():
     return render_template('register-form.html',form=form)
 
 @app.route('/users/<username>')
-def secret(username):
+def show_user(username):
     if "username" not in session:
         flash('Please login first.','danger')
         return redirect('/login')
@@ -53,6 +53,21 @@ def secret(username):
     user=User.query.filter_by(username=username).first()
     
     return render_template('user.html',user=user)
+
+@app.route('/users/<username>/delete', methods=['POST'])
+def delete_user(username):
+    if "username" not in session:
+        flash('Please login first.','danger')
+        return redirect('/login')
+    if username != session['username']:
+        flash('You can only delete your own profile.','danger')
+        return redirect(f'/users/{session["username"]}')
+    user=User.query.get(username)
+    db.session.delete(user)
+    db.session.commit()
+    session.pop("username")
+    flash('User successfully deleted','danger')
+    return redirect('/')
 
 @app.route("/login", methods=['GET','POST'])
 def login():
@@ -85,9 +100,30 @@ def add_feedback(username):
     form = FeedbackForm()
     if form.validate_on_submit():
         title = form.title.data
-        new_feedback = Feedback(title=title, username=username)
+        content = form.content.data
+        new_feedback = Feedback(title=title, username=username,content=content)
         db.session.add(new_feedback)
         db.session.commit()
         flash('Feedback added.', 'success')
         return redirect(f'/users/{username}')
     return render_template('/feedback/add.html',form=form)
+
+@app.route('/feedback/<int:feedback_id>/update', methods=['Get','POST'])
+def update_feedback(feedback_id):
+    feedback = Feedback.query.get(feedback_id)
+    if "username" not in session:
+        flash("Please login first!", "danger")
+        return redirect('/')
+    if feedback.username != session["username"]:
+        flash('This is not your feedback.','danger')
+        return redirect(f'/users/{session["username"]}')
+
+    form = FeedbackForm(obj=feedback)
+    if form.validate_on_submit():
+        feedback.title = form.title.data
+        feedback.content = form.content.data
+     
+        db.session.commit()
+        flash('Feedback updated.', 'success')
+        return redirect(f'/users/{feedback.username}')
+    return render_template('/feedback/edit.html',form=form, feedback=feedback)
