@@ -2,6 +2,8 @@ from flask import Flask, render_template, redirect, session, flash
 from flask_debugtoolbar import DebugToolbarExtension
 from models import connect_db, db, User, Feedback
 from forms import UserForm, LoginForm, FeedbackForm
+from werkzeug.exceptions import Unauthorized
+
 
 app = Flask(__name__)
 app.config["SQLALCHEMY_DATABASE_URI"] = "postgresql:///feedback"
@@ -42,9 +44,12 @@ def register():
 
 @app.route('/users/<username>')
 def secret(username):
-    if 'username' not in session:
+    if "username" not in session:
         flash('Please login first.','danger')
         return redirect('/login')
+    if username != session['username']:
+        flash('You can only view your own profile.','danger')
+        return redirect(f'/users/{session["username"]}')
     user=User.query.filter_by(username=username).first()
     
     return render_template('user.html',user=user)
