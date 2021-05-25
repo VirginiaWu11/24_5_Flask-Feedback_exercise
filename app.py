@@ -127,3 +127,20 @@ def update_feedback(feedback_id):
         flash('Feedback updated.', 'success')
         return redirect(f'/users/{feedback.username}')
     return render_template('/feedback/edit.html',form=form, feedback=feedback)
+
+@app.route('/feedback/<int:feedback_id>/delete', methods=['POST'])
+def delete_feedback(feedback_id):
+    feedback = Feedback.query.get(feedback_id)
+    if "username" not in session:
+        flash("Please login first!", "danger")
+        return redirect('/')
+    if feedback.username != session["username"]:
+        flash('This is not your feedback.','danger')
+        return redirect(f'/users/{session["username"]}')
+
+   
+    db.session.delete(feedback)
+    db.session.commit()
+    flash('Feedback deleted.', 'success')
+    return redirect(f'/users/{feedback.username}')
+    
